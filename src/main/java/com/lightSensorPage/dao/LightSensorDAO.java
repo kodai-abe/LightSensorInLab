@@ -76,8 +76,46 @@ public class LightSensorDAO implements Serializable {
                 }
             }
             return lightSensorBeanList;
-
         }
+	}
 
+	public LightSensorBean selectFirstLightSensorValue(LocalDateTime choiceDate) throws SQLException {
+        String sql = "SELECT * FROM lightsensorvalue WHERE lightsensorvalue <= 250 AND inserttime BETWEEN ? AND"
+        		+ " ? ORDER BY inserttime ASC LIMIT 1;";
+        LightSensorBean lightSensorBean = new LightSensorBean();
+        try(Connection conn = DriverManager.getConnection(DBSetting.URL, DBSetting.USER, DBSetting.PASSWORD)){
+            try(PreparedStatement stmt = conn.prepareStatement(sql)){
+            	stmt.setTimestamp(1, Timestamp.valueOf(choiceDate));
+				stmt.setTimestamp(2, Timestamp.valueOf(choiceDate.plusDays(1)));
+                ResultSet results = stmt.executeQuery();
+                while(results.next()){
+                	lightSensorBean = new LightSensorBean(
+                        results.getLong("id"),
+                        results.getInt("lightsensorvalue"),
+                		results.getTimestamp("inserttime"));
+                }
+            }
+            return lightSensorBean;
+        }
+	}
+
+	public LightSensorBean selectFinalLightSensorValue(LocalDateTime choiceDate) throws SQLException {
+        String sql = "SELECT * FROM lightsensorvalue WHERE lightsensorvalue <= 250 AND inserttime BETWEEN ? AND"
+        		+ " ? ORDER BY inserttime DESC LIMIT 1;";
+        LightSensorBean lightSensorBean = new LightSensorBean();
+        try(Connection conn = DriverManager.getConnection(DBSetting.URL, DBSetting.USER, DBSetting.PASSWORD)){
+            try(PreparedStatement stmt = conn.prepareStatement(sql)){
+            	stmt.setTimestamp(1, Timestamp.valueOf(choiceDate));
+				stmt.setTimestamp(2, Timestamp.valueOf(choiceDate.plusDays(1)));
+                ResultSet results = stmt.executeQuery();
+                while(results.next()){
+                	lightSensorBean = new LightSensorBean(
+                        results.getLong("id"),
+                        results.getInt("lightsensorvalue"),
+                		results.getTimestamp("inserttime"));
+                }
+            }
+            return lightSensorBean;
+        }
 	}
 }

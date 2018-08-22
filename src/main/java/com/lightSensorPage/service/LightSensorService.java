@@ -20,7 +20,7 @@ public class LightSensorService implements Serializable {
 		lightSensorDAO = new LightSensorDAO();
 	}
 
-	public int getLightSensorValue(){
+	public int getLightSensorValue() {
 		byte[] buffer = new byte[4096]; // 配列の定義
 		URL url;
 		int lightSensorValue = -1;
@@ -33,7 +33,7 @@ public class LightSensorService implements Serializable {
 			int n;
 
 			while ((n = htmlStream.read(buffer)) > 0) {
-				if(bool){
+				if (bool) {
 					String str = new String(buffer);
 					String lightSensorStr = "";
 					for (int i = 0; i < 6; i++) {
@@ -41,7 +41,7 @@ public class LightSensorService implements Serializable {
 							int num = Integer.parseInt(String.valueOf(str.charAt(i)));
 							lightSensorStr += num;
 						} catch (NumberFormatException e) {
-							//e.printStackTrace();
+							// e.printStackTrace();
 						}
 					}
 					lightSensorValue = Integer.parseInt(lightSensorStr);
@@ -55,36 +55,47 @@ public class LightSensorService implements Serializable {
 		return lightSensorValue;
 	}
 
-	public int insertLightSensorValue (int lightSensorValue){
+	public int insertLightSensorValue(int lightSensorValue) {
 		return lightSensorDAO.insertLightSensorValue(lightSensorValue);
 	}
 
-	public List<DayPercentBean> selectLightSensorValue (LocalDateTime choiceDate){
+	public List<DayPercentBean> selectLightSensorValue(LocalDateTime choiceDate, LocalDateTime now) {
 		List<DayPercentBean> dayPercentBeanList = new ArrayList<>();
-		for(int i = 0; i <= 23; i++){
+		for (int i = 0; i <= 23; i++) {
 			try {
-				List<LightSensorBean> lightSensorBeanList = lightSensorDAO.selectLightSensorValue(choiceDate.plusHours(i));
+				List<LightSensorBean> lightSensorBeanList = lightSensorDAO
+						.selectLightSensorValue(choiceDate.plusHours(i));
 				DayPercentBean dayPercentBean = new DayPercentBean();
 				dayPercentBean.setHour(i);
 
+				dayPercentBean.setIsNow(choiceDate.getYear() == now.getYear() && choiceDate.getMonth() == now.getMonth()
+						&& choiceDate.getDayOfMonth() == now.getDayOfMonth() && dayPercentBean.getHour() == now.getHour());
+
 				int countValue = 0;
 				int errorValue = 0;
-				for(LightSensorBean lightSensorBean : lightSensorBeanList){
-					if (lightSensorBean.getLightSensorValue() == -1) {
+				for (LightSensorBean lightSensorBean : lightSensorBeanList) {
+					if(lightSensorBean.getLightSensorValue() == -1) {
 						errorValue++;
 					} else if (lightSensorBean.getLightSensorValue() <= 250) {
 						countValue++;
 					}
 				}
-				if(errorValue >= 10){
+				if (errorValue >= 10) {
 					dayPercentBean.setPercent(-1);
-				}
-				//5分ごとにデータを収集してるので、処理時間含め、１時間で702回前後のデータが収集されている
-				//誤差含め、仮に680という値に設定
-				else if(lightSensorBeanList.size() <= 680){
-					dayPercentBean.setPercent(-1);
+				} else if(!dayPercentBean.getIsNow()){
+					// 5分ごとにデータを収集してるので、処理時間含め、１時間で702回前後のデータが収集されている
+					// 誤差含め、仮に684という値に設定 (11.4 * 60)
+					if (lightSensorBeanList.size() <= 684) {
+						dayPercentBean.setPercent(-1);
+					} else {
+						dayPercentBean.setPercent((double) countValue / lightSensorBeanList.size());
+					}
 				} else {
-					dayPercentBean.setPercent((double)countValue / lightSensorBeanList.size());
+					if (lightSensorBeanList.size() <= (double)now.getMinute() * 11.4) {
+						dayPercentBean.setPercent(-1);
+					} else {
+						dayPercentBean.setPercent((double) countValue / lightSensorBeanList.size());
+					}
 				}
 
 				dayPercentBeanList.add(dayPercentBean);
@@ -94,5 +105,25 @@ public class LightSensorService implements Serializable {
 			}
 		}
 		return dayPercentBeanList;
+	}
+
+	public LightSensorBean selectFirstLightSensorValue(LocalDateTime choiceDate){
+		//TODO:throwsしないようにする
+		try {
+			return lightSensorDAO.selectFirstLightSensorValue(choiceDate);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return new LightSensorBean();
+		}
+	}
+
+	public LightSensorBean selectFinalLightSensorValue(LocalDateTime choiceDate){
+		//TODO:throwsしないようにする
+		try {
+			return lightSensorDAO.selectFinalLightSensorValue(choiceDate);
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return new LightSensorBean();
+		}
 	}
 }

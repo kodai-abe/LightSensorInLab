@@ -37,10 +37,13 @@
 			</h2>
 		</header>
 		<div class="innerS">
+		<p>最初に人が来た時間 <span wicket:id="first"></span></p>
+		<p>最後の人が帰った時間 <span wicket:id="final"></span></p>
+		<p>　</p>
 		<table border="1">
 			<tr>
 				<th>時間</th>
-				<th>研究室に人がいた割合</th>
+				<th>人がいた時間(分単位)</th>
 			</tr>
 			<tr wicket:id="dayPercentBean">
 				<td wicket:id="hour"></td>
@@ -59,7 +62,8 @@
 			</h2>
 		</header>
 		<div class="innerS">
-		<p>「yyyy/MM/dd」と入力してください</p>
+		<p>日付を「yyyy/MM/dd」と入力してください</p>
+		<p style="font-size:15px;">2018/08/20 : データ収集開始</p>
 			<form wicket:id="form">
 				<input type="text" wicket:id="date">
 				<button type="submit">送信</button>
